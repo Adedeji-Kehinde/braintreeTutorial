@@ -1,10 +1,40 @@
-
 <div id="dropin-wrapper">
   <div id="checkout-message"></div>
   <div id="dropin-container"></div>
   <button id="submit-button">Submit payment</button>
 </div>
 <script>
+  var threeDSecureParameters = {
+    amount: '500.00',
+    email: 'test@example.com',
+    billingAddress: {
+      givenName: 'Jill', // ASCII-printable characters required, else will throw a validation error
+      surname: 'Doe', // ASCII-printable characters required, else will throw a validation error
+      phoneNumber: '8101234567',
+      streetAddress: '555 Smith St.',
+      extendedAddress: '#5',
+      locality: 'Oakland',
+      region: 'CA', // ISO-3166-2 code
+      postalCode: '12345',
+      countryCodeAlpha2: 'US'
+    },
+    collectDeviceData: true,
+    additionalInformation: {
+      workPhoneNumber: '8101234567',
+      shippingGivenName: 'Jill',
+      shippingSurname: 'Doe',
+      shippingPhone: '8101234567',
+      shippingAddress: {
+        streetAddress: '555 Smith St.',
+        extendedAddress: '#5',
+        locality: 'Oakland',
+        region: 'CA', // ISO-3166-2 code
+        postalCode: '12345',
+        countryCodeAlpha2: 'US'
+      }
+    },
+  };
+ 
   var button = document.querySelector('#submit-button');
   $.ajax({
           type: "GET",
@@ -15,10 +45,20 @@
     braintree.dropin.create({
     // Insert your tokenization key here
     authorization: clientToken,
-    container: '#dropin-container'
+    container: '#dropin-container',
+    threeDSecure: true, // add 3DS
+    card: {
+    cardholderName: {
+      required: false
+      // to make cardholder name required
+      // required: true
+    }
+    }
   }, function (createErr, instance) {
     button.addEventListener('click', function () {
-      instance.requestPaymentMethod(function (requestPaymentMethodErr, payload) {
+      instance.requestPaymentMethod({
+          threeDSecure: threeDSecureParameters
+          },function (requestPaymentMethodErr, payload) {
         // When the user clicks on the 'Submit payment' button this code will send the
         // encrypted payment information in a variable called a payment method nonce
         $.ajax({
@@ -36,7 +76,7 @@
               $('#submit-button').remove();
             }
           });
-
+ 
           if (result.success) {
             $('#checkout-message').html('<h1>Success</h1><p>Your Drop-in UI is working! Check your <a href="https://sandbox.braintreegateway.com/login">sandbox Control Panel</a> for your test transactions.</p><p>Refresh to try another transaction.</p>');
           } else {
